@@ -86,6 +86,12 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
       double p_y = measurement_pack.raw_measurements_[1];
       ekf_.x_ << p_x, p_y, 0.0, 0.0;
     }
+    
+    ekf_.P_ = MatrixXd(4, 4);
+    ekf_.P_ << 1, 0, 0, 0,
+               0, 1, 0, 0,
+               0, 0, 1000, 0,
+               0, 0, 0, 1000;
 
     // done initializing, no need to predict or update
     is_initialized_ = true;
@@ -109,11 +115,6 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
              0, 0, 1, 0,
              0, 0, 0, 1;
   
-  ekf_.P_ = MatrixXd(4, 4);
-  ekf_.P_ << 1, 0, 0, 0,
-             0, 1, 0, 0,
-             0, 0, 1000, 0,
-             0, 0, 0, 1000;
   
   double dt_4_4 = (pow(dt, 4)/4);
   double dt_3_2 = (pow(dt, 3)/2);
