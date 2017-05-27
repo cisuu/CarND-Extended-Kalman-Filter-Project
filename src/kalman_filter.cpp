@@ -1,7 +1,11 @@
 #include "kalman_filter.h"
+#include <iostream>
+#include <cmath>
 
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
+
+using namespace std;
 
 KalmanFilter::KalmanFilter() {}
 
@@ -18,22 +22,60 @@ void KalmanFilter::Init(VectorXd &x_in, MatrixXd &P_in, MatrixXd &F_in,
 }
 
 void KalmanFilter::Predict() {
-  /**
-  TODO:
-    * predict the state
-  */
+  x_ = F_ * x_;
+  MatrixXd Ft = F_.transpose();
+  P_ = F_ * P_ * Ft + Q_;
 }
 
 void KalmanFilter::Update(const VectorXd &z) {
-  /**
-  TODO:
-    * update the state by using Kalman Filter equations
-  */
+  VectorXd y = z - H_ * x_;
+  MatrixXd Ht = H_.transpose();
+  MatrixXd S = H_ * P_ * Ht + R_;
+  MatrixXd Si = S.inverse();
+  MatrixXd K = P_ * Ht * Si;
+  
+  x_ = x_ + (K* y);
+  long x_size = x_.size();
+  MatrixXd I = MatrixXd::Identity(x_size, x_size);
+  P_ = (I - K * H_) * P_;
+  cout << "P_Lidar:" << P_ << endl;
 }
 
 void KalmanFilter::UpdateEKF(const VectorXd &z) {
-  /**
-  TODO:
-    * update the state by using Extended Kalman Filter equations
-  */
+  VectorXd h = VectorXd(3);
+  double p_x = x_(0);
+  double p_y = x_(1);
+  double v_x = x_(2);
+  double v_y = x_(3);
+  double rho = sqrt(pow(p_x, 2) + pow(p_y, 2));
+  double theta;
+  double rho_dot;
+  if(fabs(p_x) > 0.001) {
+      theta = atan2(p_y, p_x);
+  }else{
+      theta = 0.0;
+  }
+  
+  if (fabs(rho) > 0.001){
+    rho_dot = (p_x * v_x + p_y * v_y) / (rho);
+  } else {
+    rho = 0.0;
+    rho_dot = 0.0;
+  }
+
+  h << rho, theta, rho_dot;
+  
+  VectorXd y = z - h;
+  y[1] = fmod(y[1], M_PI);
+  MatrixXd Ht = H_.transpose();
+  MatrixXd S = H_ * P_ * Ht + R_;
+  MatrixXd Si = S.inverse();
+  MatrixXd K = P_ * Ht * Si;
+  
+  x_ = x_ + (K* y);
+  long x_size = x_.size();
+  MatrixXd I = MatrixXd::Identity(x_size, x_size);
+  P_ = (I - K * H_) * P_;
 }
+
+
