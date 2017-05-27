@@ -70,12 +70,11 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
       */
       double rho = measurement_pack.raw_measurements_[0];
       double theta = measurement_pack.raw_measurements_[1];
-      double rho_dot = measurement_pack.raw_measurements_[2];
       
       double p_x = rho * cos(theta);
       double p_y = rho * sin(theta);
-      double v_x = rho_dot * cos(theta);
-      double v_y = rho_dot * sin(theta);
+      double v_x = 0;
+      double v_y = 0;
       
       ekf_.x_ << p_x, p_y, v_x, v_y;
     }
