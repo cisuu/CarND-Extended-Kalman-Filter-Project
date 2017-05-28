@@ -2,6 +2,8 @@
 #include <iostream>
 #include <cmath>
 
+#define EPS 0.001
+
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
 
@@ -29,16 +31,7 @@ void KalmanFilter::Predict() {
 
 void KalmanFilter::Update(const VectorXd &z) {
   VectorXd y = z - H_ * x_;
-  MatrixXd Ht = H_.transpose();
-  MatrixXd S = H_ * P_ * Ht + R_;
-  MatrixXd Si = S.inverse();
-  MatrixXd K = P_ * Ht * Si;
-  
-  x_ = x_ + (K* y);
-  long x_size = x_.size();
-  MatrixXd I = MatrixXd::Identity(x_size, x_size);
-  P_ = (I - K * H_) * P_;
-  cout << "P_Lidar:" << P_ << endl;
+  StateCovarianceUpdate(y);
 }
 
 void KalmanFilter::UpdateEKF(const VectorXd &z) {
@@ -48,12 +41,12 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
   double v_x = x_(2);
   double v_y = x_(3);
   double rho = sqrt(pow(p_x, 2) + pow(p_y, 2));
-  if(fabs(p_x) < 0.001) {
-    p_x = 0.001;
+  if(fabs(p_x) < EPS) {
+    p_x = EPS;
   }
   double theta = atan2(p_y, p_x);
-  if (fabs(rho) < 0.001){
-    rho = 0.001;
+  if (fabs(rho) < EPS){
+    rho = EPS;
   }
   double rho_dot = (p_x * v_x + p_y * v_y) / (rho);
 
@@ -63,6 +56,10 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
   if(fabs(y[1]) > M_PI){
       y[1] = atan2(sin(y[1]), cos(y[1]));
   }
+  StateCovarianceUpdate(y);
+}
+
+void KalmanFilter::StateCovarianceUpdate(const VectorXd &y){
   MatrixXd Ht = H_.transpose();
   MatrixXd S = H_ * P_ * Ht + R_;
   MatrixXd Si = S.inverse();

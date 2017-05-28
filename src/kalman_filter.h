@@ -66,6 +66,11 @@ public:
    * @param z The measurement at k+1
    */
   void UpdateEKF(const Eigen::VectorXd &z);
+  
+  /**
+   * Extract similiar code of EKF and KF update step
+   */
+  void StateCovarianceUpdate(const Eigen::VectorXd &y);
 
 };
 

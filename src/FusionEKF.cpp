@@ -59,7 +59,6 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
    *  Initialization
    ****************************************************************************/
   if (!is_initialized_) {
-    cout << "EKF: " << endl;
     ekf_.x_ = VectorXd(4);
     
     previous_timestamp_ = measurement_pack.timestamp_;
@@ -92,6 +91,12 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
                0, 1, 0, 0,
                0, 0, 1000, 0,
                0, 0, 0, 1000;
+    
+    ekf_.F_ = MatrixXd(4, 4);
+    ekf_.F_ << 1, 0, 1, 0,
+               0, 1, 0, 1,
+               0, 0, 1, 0,
+               0, 0, 0, 1;
 
     // done initializing, no need to predict or update
     is_initialized_ = true;
@@ -107,14 +112,6 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
   
   float dt = (measurement_pack.timestamp_ - previous_timestamp_) / 1000000.0;	//dt - expressed in seconds
   previous_timestamp_ = measurement_pack.timestamp_;
-  
-  
-  ekf_.F_ = MatrixXd(4, 4);
-  ekf_.F_ << 1, 0, dt, 0,
-             0, 1, 0, dt,
-             0, 0, 1, 0,
-             0, 0, 0, 1;
-  
   
   double dt_4_4 = (pow(dt, 4)/4);
   double dt_3_2 = (pow(dt, 3)/2);
@@ -133,6 +130,9 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
              dt_3_2_ax, 0, dt_2_ax, 0,
              0, dt_3_2_ay, 0, dt_2_ay;
   
+  ekf_.F_(0,2) = dt;
+  ekf_.F_(1,3) = dt;
+  
   ekf_.Predict();
 
   /*****************************************************************************
@@ -140,11 +140,11 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
    ****************************************************************************/
 
   if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
+    // Radar updates
     ekf_.R_ = R_radar_;
     ekf_.H_ = Hj_;
     ekf_.H_ = tools.CalculateJacobian(ekf_.x_);
     ekf_.UpdateEKF(measurement_pack.raw_measurements_);
-    // Radar updates
   } else {
     // Laser updates
     ekf_.R_ = R_laser_;

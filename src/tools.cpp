@@ -1,6 +1,8 @@
 #include <iostream>
 #include "tools.h"
 
+#define EPS 0.001
+
 using Eigen::VectorXd;
 using Eigen::MatrixXd;
 using std::vector;
@@ -42,7 +44,7 @@ MatrixXd Tools::CalculateJacobian(const VectorXd& x_state) {
   double vx = x_state(2);
   double vy = x_state(3);
   
-  if(fabs(px) < 0.001 || fabs(py) < 0.001){
+  if(fabs(px) < EPS || fabs(py) < EPS){
     cout << "error" << endl;
     return Hj;
   }
@@ -61,7 +63,7 @@ MatrixXd Tools::CalculateJacobian(const VectorXd& x_state) {
   double Hj_2_2 = px/(sqrt(px_py_pow_sum));
   double Hj_2_3 = py/(sqrt(px_py_pow_sum));
   
-  if(fabs(px_py_pow_sum) < 0.001){
+  if(fabs(px_py_pow_sum) < EPS){
     cout << "CalculateJacobian () - Error - Division by Zero" << endl;
     return Hj;
   }
